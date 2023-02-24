@@ -47,23 +47,74 @@ class SearchProblem:
 class SingleFoodSearchProblem(SearchProblem):
     def __init__(self, startingGameState):
         # TODO 1
-        pass
+        self.expanded_states = []
+        lines = graph_text.split('\n')
+        r = re.match('start_state:(.*)', lines[0])
+        if r == None:
+            print "Broken graph:"
+            print '"""%s"""' % graph_text
+            raise Exception("GraphSearch graph specification start_state not found or incorrect on line:" + l)
+        self.start_state = r.group(1).strip()
+        r = re.match('goal_states:(.*)', lines[1])
+        if r == None:
+            print "Broken graph:"
+            print '"""%s"""' % graph_text
+            raise Exception("GraphSearch graph specification goal_states not found or incorrect on line:" + l)
+        goals = r.group(1).split()
+        self.goals = map(str.strip, goals)
+        self.successors = {}
+        all_states = set()
+        self.orderedSuccessorTuples = []
+        for l in lines[2:]:
+            if len(l.split()) == 3:
+                start, action, next_state = l.split()
+                cost = 1
+            elif len(l.split()) == 4:
+                start, action, next_state, cost = l.split()
+            else:
+                print "Broken graph:"
+                print '"""%s"""' % graph_text
+                raise Exception("Invalid line in GraphSearch graph specification on line:" + l)
+            cost = float(cost)
+            self.orderedSuccessorTuples.append((start, action, next_state, cost))
+            all_states.add(start)
+            all_states.add(next_state)
+            if start not in self.successors:
+                self.successors[start] = []
+            self.successors[start].append((next_state, action, cost))
+        for s in all_states:
+            if s not in self.successors:
+                self.successors[s] = []
 
     def getStartState(self):
         # TODO 1
-        pass
+        return self.start_state
 
     def isGoalState(self, state):
         # TODO 3
-        pass
+        return state in self.goals
 
     def getSuccessors(self, state):
         # TODO 4
-        pass
+        self.expanded_states.append(state)
+        return list(self.successors[state])
 
     def getCostOfActions(self, actions):
         # TODO 5
-        pass
+        total_cost = 0
+        state = self.start_state
+        for a in actions:
+            successors = self.successors[state]
+            match = False
+            for (next_state, action, cost) in successors:
+                if a == action:
+                    state = next_state
+                    total_cost += cost
+                    match = True
+            if not match:
+                print 'invalid action sequence'
+                sys.exit(1)
+        return total_cost
 
 
 class MultiFoodSearchProblem(SearchProblem):
