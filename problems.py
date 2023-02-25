@@ -1,5 +1,6 @@
 import util
-
+import re
+import sys
 
 class SearchProblem:
     """
@@ -48,20 +49,20 @@ class SingleFoodSearchProblem(SearchProblem):
     def __init__(self, startingGameState):
         # TODO 1
         self.expanded_states = []
-        lines = graph_text.split('\n')
+        lines = startingGameState.split('\n')
         r = re.match('start_state:(.*)', lines[0])
         if r == None:
-            print "Broken graph:"
-            print '"""%s"""' % graph_text
-            raise Exception("GraphSearch graph specification start_state not found or incorrect on line:" + l)
+            print("Broken graph:")
+            print('"""%s"""' % startingGameState)
+            raise Exception("GraphSearch graph specification start_state not found or incorrect on line 0")
         self.start_state = r.group(1).strip()
         r = re.match('goal_states:(.*)', lines[1])
         if r == None:
-            print "Broken graph:"
-            print '"""%s"""' % graph_text
-            raise Exception("GraphSearch graph specification goal_states not found or incorrect on line:" + l)
+            print("Broken graph:")
+            print('"""%s"""' % startingGameState)
+            raise Exception("GraphSearch graph specification goal_states not found or incorrect on line 1")
         goals = r.group(1).split()
-        self.goals = map(str.strip, goals)
+        self.goals = [str.strip(g) for g in goals]
         self.successors = {}
         all_states = set()
         self.orderedSuccessorTuples = []
@@ -72,8 +73,8 @@ class SingleFoodSearchProblem(SearchProblem):
             elif len(l.split()) == 4:
                 start, action, next_state, cost = l.split()
             else:
-                print "Broken graph:"
-                print '"""%s"""' % graph_text
+                print("Broken graph:")
+                print('"""%s"""' % startingGameState)
                 raise Exception("Invalid line in GraphSearch graph specification on line:" + l)
             cost = float(cost)
             self.orderedSuccessorTuples.append((start, action, next_state, cost))
@@ -85,6 +86,7 @@ class SingleFoodSearchProblem(SearchProblem):
         for s in all_states:
             if s not in self.successors:
                 self.successors[s] = []
+        
 
     def getStartState(self):
         # TODO 1
@@ -112,7 +114,7 @@ class SingleFoodSearchProblem(SearchProblem):
                     total_cost += cost
                     match = True
             if not match:
-                print 'invalid action sequence'
+                print('invalid action sequence')
                 sys.exit(1)
         return total_cost
 
@@ -121,6 +123,7 @@ class MultiFoodSearchProblem(SearchProblem):
     def __init__(self, startingGameState):
         # TODO 6
         pass
+        
 
     def getStartState(self):
         # TODO 7
