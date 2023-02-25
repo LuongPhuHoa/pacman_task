@@ -1,6 +1,9 @@
+from game import Directions
+from game import Agent
+from game import Actions
 import util
-import re
-import sys
+import time
+import search
 
 class SearchProblem:
     """
@@ -48,95 +51,111 @@ class SearchProblem:
 class SingleFoodSearchProblem(SearchProblem):
     def __init__(self, startingGameState):
         # TODO 1
-        self.expanded_states = []
-        lines = startingGameState.split('\n')
-        r = re.match('start_state:(.*)', lines[0])
-        if r == None:
-            print("Broken graph:")
-            print('"""%s"""' % startingGameState)
-            raise Exception("GraphSearch graph specification start_state not found or incorrect on line 0")
-        self.start_state = r.group(1).strip()
-        r = re.match('goal_states:(.*)', lines[1])
-        if r == None:
-            print("Broken graph:")
-            print('"""%s"""' % startingGameState)
-            raise Exception("GraphSearch graph specification goal_states not found or incorrect on line 1")
-        goals = r.group(1).split()
-        self.goals = [str.strip(g) for g in goals]
-        self.successors = {}
-        all_states = set()
-        self.orderedSuccessorTuples = []
-        for l in lines[2:]:
-            if len(l.split()) == 3:
-                start, action, next_state = l.split()
-                cost = 1
-            elif len(l.split()) == 4:
-                start, action, next_state, cost = l.split()
-            else:
-                print("Broken graph:")
-                print('"""%s"""' % startingGameState)
-                raise Exception("Invalid line in GraphSearch graph specification on line:" + l)
-            cost = float(cost)
-            self.orderedSuccessorTuples.append((start, action, next_state, cost))
-            all_states.add(start)
-            all_states.add(next_state)
-            if start not in self.successors:
-                self.successors[start] = []
-            self.successors[start].append((next_state, action, cost))
-        for s in all_states:
-            if s not in self.successors:
-                self.successors[s] = []
+        self.walls = startingGameState.getWalls()
+        self.startState = startingGameState.getPacmanPosition()
+        if startingGameState.start != None: self.startState = startingGameState.start
+        self.goal = startingGameState.goal
+        self.costFn = startingGameState.costFn
+        self.visualize = startingGameState.visualize
+        if startingGameState.warn and (startingGameState.getNumFood() != 1 or not startingGameState.hasFood(*startingGameState.goal)):
+            print('Warning: this does not look like a regular search maze')
+
+        # For display purposes
+        self._visited, self._visitedlist, self._expanded = {}, [], 0 # DO NOT CHANGE
         
 
     def getStartState(self):
         # TODO 1
-        return self.start_state
+        return self.startState
 
     def isGoalState(self, state):
         # TODO 3
-        return state in self.goals
+        isGoal = state == self.goal
+
+        # For display purposes only
+        if isGoal and self.visualize:
+            self._visitedlist.append(state)
+            import __main__
+            if '_display' in dir(__main__):
+                if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
+                    __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
+
+        return isGoal
 
     def getSuccessors(self, state):
         # TODO 4
-        self.expanded_states.append(state)
-        return list(self.successors[state])
+        successors = []
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x,y = state
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextState = (nextx, nexty)
+                cost = self.costFn(nextState)
+                successors.append( ( nextState, action, cost) )
+
+        # Bookkeeping for display purposes
+        self._expanded += 1 # DO NOT CHANGE
+        if state not in self._visited:
+            self._visited[state] = True
+            self._visitedlist.append(state)
+
+        return successors
 
     def getCostOfActions(self, actions):
         # TODO 5
-        total_cost = 0
-        state = self.start_state
-        for a in actions:
-            successors = self.successors[state]
-            match = False
-            for (next_state, action, cost) in successors:
-                if a == action:
-                    state = next_state
-                    total_cost += cost
-                    match = True
-            if not match:
-                print('invalid action sequence')
-                sys.exit(1)
-        return total_cost
-
+        if actions == None: return 999999
+        x,y= self.getStartState()
+        cost = 0
+        for action in actions:
+            # Check figure out the next state and see whether its' legal
+            dx, dy = Actions.directionToVector(action)
+            x, y = int(x + dx), int(y + dy)
+            if self.walls[x][y]: return 999999
+            cost += self.costFn((x,y))
+        return cost
 
 class MultiFoodSearchProblem(SearchProblem):
     def __init__(self, startingGameState):
         # TODO 6
-        pass
+        self.start = (startingGameState.getPacmanPosition(), startingGameState.getFood())
+        self.walls = startingGameState.getWalls()
+        self.startingGameState = startingGameState
+        self._expanded = 0 # DO NOT CHANGE
+        self.heuristicInfo = {} # A dictionary for the heuristic to store information
         
 
     def getStartState(self):
         # TODO 7
-        pass
+        return self.start
 
     def isGoalState(self, state):
         # TODO 8
-        pass
+        return state[1].count() == 0
 
     def getSuccessors(self, state):
         # TODO 9
-        pass
+        successors = []
+        self._expanded += 1 # DO NOT CHANGE
+        for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x,y = state[0]
+            dx, dy = Actions.directionToVector(direction)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextFood = state[1].copy()
+                nextFood[nextx][nexty] = False
+                successors.append( ( ((nextx, nexty), nextFood), direction, 1) )
+        return successors
 
     def getCostOfActions(self, actions):
         # TODO 10
-        pass
+        x,y= self.getStartState()[0]
+        cost = 0
+        for action in actions:
+            # figure out the next state and see whether it's legal
+            dx, dy = Actions.directionToVector(action)
+            x, y = int(x + dx), int(y + dy)
+            if self.walls[x][y]:
+                return 999999
+            cost += 1
+        return cost
