@@ -149,7 +149,11 @@ def singleFoodSearchHeuristic(state, problem=None):
     A heuristic function for the problem of single food search
     """
     # TODO 20
-    pass
+    position, foodGrid = state
+    foods = foodGrid.asList()
+    #if there is no food then return 0
+    if not foods:
+        return 0
 
 
 def multiFoodSearchHeuristic(state, problem=None):
@@ -158,25 +162,13 @@ def multiFoodSearchHeuristic(state, problem=None):
     """
     # TODO 21
     position, foodGrid = state
-    foods = foodGrid.asList()
-    #if there is no food then return 0
-    if not foods:
-        return 0
-
-    farFood = 0
-    for food in foods:
-        key = position + food
-        if key in problem.heuristicInfo:
-            distance = problem.heuristicInfo[key]
-        else:
-            # Use manhattan distance 
-            distance = mazeDistance(position, food, problem.startingGameState)
-            problem.heuristicInfo[key] = distance
-
-        if distance > farFood:
-            farFood = distance
-
-    return farFood
+    heuristic = 0
+    for x in range(foodGrid.width):
+        for y in range(foodGrid.height):
+            if foodGrid[x][y]:
+                dist = util.manhattanDistance(position, (x, y))
+                heuristic = max(heuristic, dist)
+    return heuristic
 
 
 def aStarSearch(problem, heuristic=nullHeuristic):

@@ -48,16 +48,11 @@ class SearchProblem:
 class SingleFoodSearchProblem(SearchProblem):
     def __init__(self, startingGameState):
         # TODO 1
+        self.food = startingGameState.getFood()
+        # Store info for the PositionSearchProblem (no need to change this)
         self.walls = startingGameState.getWalls()
         self.startState = startingGameState.getPacmanPosition()
-        if startingGameState.start != None: self.startState = startingGameState.start
-        self.goal = startingGameState.goal
-        self.costFn = startingGameState.costFn
-        self.visualize = startingGameState.visualize
-        if startingGameState.warn and (startingGameState.getNumFood() != 1 or not startingGameState.hasFood(*startingGameState.goal)):
-            print('Warning: this does not look like a regular search maze')
-
-        # For display purposes
+        self.costFn = lambda x: 1
         self._visited, self._visitedlist, self._expanded = {}, [], 0 # DO NOT CHANGE
         
 
@@ -67,17 +62,10 @@ class SingleFoodSearchProblem(SearchProblem):
 
     def isGoalState(self, state):
         # TODO 3
-        isGoal = state == self.goal
-
-        # For display purposes only
-        if isGoal and self.visualize:
-            self._visitedlist.append(state)
-            import __main__
-            if '_display' in dir(__main__):
-                if 'drawExpandedCells' in dir(__main__._display): #@UndefinedVariable
-                    __main__._display.drawExpandedCells(self._visitedlist) #@UndefinedVariable
-
-        return isGoal
+        x, y = state
+        if self.food[x][y] == True:
+            return True
+        return False
 
     def getSuccessors(self, state):
         # TODO 4
