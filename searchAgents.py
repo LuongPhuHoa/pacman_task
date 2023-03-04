@@ -63,25 +63,25 @@ class BFSFoodSearchAgent(SearchAgent):
     # TODO 13
     def __init__(self):
         self.searchFunction = lambda prob: search.breadthFirstSearch(prob)
-        self.searchType = SingleFoodSearchProblem
+        self.searchType = MultiFoodSearchProblem
 
 
 class DFSFoodSearchAgent(SearchAgent):
     # TODO 14
     def __init__(self):
-        self.searchFunction = search.depthFirstSearch
-        self.searchType = SingleFoodSearchProblem
+        self.searchFunction = lambda prob: search.depthFirstSearch(prob)
+        self.searchType = MultiFoodSearchProblem
 
 
 class UCSFoodSearchAgent(SearchAgent):
     # TODO 15
     def __init__(self):
-        self.searchFunction = search.uniformCostSearch
-        self.searchType = SingleFoodSearchProblem
+        self.searchFunction = lambda prob: search.uniformCostSearch(prob)
+        self.searchType = MultiFoodSearchProblem
 
 
 class AStarFoodSearchAgent(SearchAgent):
     # TODO 16
     def __init__(self):
-        self.searchFunction = search.aStarSearch
+        self.searchFunction = lambda prob: search.aStarSearch(prob, search.multiFoodSearchHeuristic)
         self.searchType = MultiFoodSearchProblem
